@@ -1,42 +1,80 @@
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from secrets import client_id, client_secret
+from secrets import client_id, client_secret, psql_params
+import psycopg2
 
 
-# Authentication - without user
 client_credentials_manager = SpotifyClientCredentials(client_id=client_id,
 													  client_secret=client_secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
-#%%
 playlist_link = "https://open.spotify.com/playlist/37i9dQZF1DWSpF87bP6JSF"
 playlist_uri = playlist_link.split("/")[-1].split("?")[0]
 track_uris = [x["track"]["uri"] for x in sp.playlist_tracks(playlist_uri)["items"]]
 
-#%%
+conn = psycopg2.connect(**psql_params)
+curr = conn.cursor()
+
 data = {}
-for track in sp.playlist_tracks(playlist_uri)["items"][49:50]:
-	# URI
-	data["track_uri"] = track["track"]["uri"]
-	
-	# Track Name
-	data["track_name"] = track["track"]["name"]
-	
+for track in sp.playlist_tracks(playlist_uri)["items"][48:49]:
 	# Artists
+	print(f"length: {len(track['track']['artists'])}")
+	artist_ids = []
+	
 	for index, artist in enumerate(track["track"]["artists"]):
-		data[f"artist_name_{index + 1}"] = artist["name"]
+		artist_name = artist["name"]
 		
 		artist_uri = artist["uri"]
 		artist_info = sp.artist(artist_uri)
 		
-		data[f"artist_pop_{index + 1}"] = artist_info["popularity"]
-		data[f"artist_genres_{index + 1}"] = artist_info["genres"]
+		artist_genres = artist_info["genres"]
+		artist_popularity = artist_info["popularity"]
+		
+		try:
+			curr.execute("INSERT INTO artists (name, genres, popularity) VALUES (%s, %s, %s)",
+						 (artist_name, artist_genres, artist_popularity))
+		except:
+			conn.rollback()
+			
+		curr.execute("SELECT artist_id FROM artists WHERE name = %s", (artist_name, ))
+		artist_id = curr.fetchall()[0][0]
+		
+		artist_ids.append(artist_id)
 	
-	# Album
-	data["album"] = track["track"]["album"]["name"]
+	# Tracks
+	name = track["track"]["name"]
+	popularity = track["track"]["popularity"]
+	album = track["track"]["album"]["name"]
 	
-	# Popularity of the track
-	data["track_pop"] = track["track"]["popularity"]
+	track_uri = track["track"]["uri"]
+	features = sp.audio_features(track_uri)[0]
 	
-	data["audio_features"] = sp.audio_features(data["track_uri"])[0]
+	acousticness = features["acousticness"]
+	danceability = features["danceability"]
+	duration_ms = features["duration_ms"]
+	energy = features["energy"]
+	instrumentalness = features["instrumentalness"]
+	key = features["key"]
+	liveness = features["liveness"]
+	loudness = features["loudness"]
+	mode = features["mode"]
+	speechiness = features["speechiness"]
+	tempo = features["tempo"]
+	time_signature = features["time_signature"]
+	valence = features["valence"]
+	
+	for artist_id in artist_ids:
+		curr.execute("""INSERT INTO tracks (name, popularity, acousticness, danceability,
+											duration_ms, energy, instrumentalness, key, liveness,
+											loudness, mode, speechiness, tempo, time_signature,
+											valence, artist_id)
+						VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+					 (name, popularity, acousticness, danceability, duration_ms, energy,
+					  instrumentalness, key, liveness, loudness, mode, speechiness, tempo,
+					  time_signature, valence, artist_id))
 
+conn.commit()
+curr.close()
+conn.close()
+
+print("Datos ingresados exitosamente!")
