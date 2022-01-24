@@ -295,3 +295,5 @@ cython_debug/
 .idea/spotify.iml
 
 secrets.py
+
+tests.py
