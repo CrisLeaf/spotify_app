@@ -294,6 +294,6 @@ cython_debug/
 
 .idea/spotify.iml
 
-secrets.py
+token_secrets.py
 
 tests.py
