@@ -31,14 +31,22 @@ def main():
 	artist_id = st.text_input("Ingrese ID del Artista:")
 	
 	if st.button("Recomendar"):
-		recommendations = spot_rec.artist_recommendation(artist_id)
-		
-		for id, name in zip(recommendations["id"], recommendations["name"]):
-			html_source_code = f"""
-						<p class="source-code-info">
-						<a href="https://open.spotify.com/artist/{id}">{name}</a></p>
-					"""
-			st.markdown(html_source_code, unsafe_allow_html=True)
+		try:
+			recommendations = spot_rec.artist_recommendation(artist_id)
+			
+			for id, name in zip(recommendations["id"], recommendations["name"]):
+				html_source_code = f"""
+							<p class="source-code-info">
+							<a href="https://open.spotify.com/artist/{id}">{name}</a></p>
+						"""
+				st.markdown(html_source_code, unsafe_allow_html=True)
+		except:
+			st.error("El ID no es válido.")
+			
+	with st.expander("¿Cómo obtener la ID del artista?"):
+		st.write("Ve a la página del artista en Spotify, copia y pega el ID:")
+		st.image("images/artist_id.png")
+	
 	
 	html_source_code = """
 		<p class="source-code">Código Fuente:
