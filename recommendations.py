@@ -2,13 +2,14 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from token_secrets import client_id, client_secret
 import pandas as pd
+import streamlit as st
 
 
 class SpotifyRecommendations():
 	
 	def __init__(self, client_id, client_secret):
-		self.client_id = client_id
-		self.client_secret = client_secret
+		self.client_id = st.secrets["client_id"]
+		self.client_secret = st.secrets["client_secret"]
 	
 	def connect(self):
 		client_credentials_manager = SpotifyClientCredentials(client_id=self.client_id,

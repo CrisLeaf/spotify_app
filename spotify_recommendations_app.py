@@ -1,6 +1,5 @@
 import streamlit as st
 from recommendations import SpotifyRecommendations
-from token_secrets import client_id, client_secret
 
 
 def main():
@@ -25,7 +24,7 @@ def main():
 	"""
 	st.markdown(html_header, unsafe_allow_html=True)
 	
-	spot_rec = SpotifyRecommendations(client_id, client_secret)
+	spot_rec = SpotifyRecommendations(st.secrets["client_id"], st.secrets["client_secret"])
 	spot_rec.connect()
 	
 	artist_id = st.text_input("Ingrese ID del Artista:")

@@ -297,3 +297,5 @@ cython_debug/
 token_secrets.py
 
 tests.py
+
+.streamlit/secrets.toml
